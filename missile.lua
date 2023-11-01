@@ -1,9 +1,10 @@
 Missile = {}
-Missile.new = function(x, y, r)
+Missile.new = function(owner)
     local self = {}
-    self.x = x
-    self.y = y
-    self.r = r
+    self.owner = owner
+    self.x = owner.x
+    self.y = owner.y
+    self.r = owner.r
     self.v = 300
     self.image = love.graphics.newImage("assets/love-cursor.png")
     self.alive = true
@@ -21,6 +22,15 @@ Missile.new = function(x, y, r)
             self.y = self.y + self.v * dt * math.sin(self.r)
     
             self.age = self.age + dt
+
+            -- collision detection
+            for i,spaceship in ipairs(spaceships) do
+                if ((self.x - spaceship.x) * (self.x - spaceship.x) + (self.y - spaceship.y) * (self.y - spaceship.y) < 500) then
+                    if self.owner ~= spaceship then
+                        spaceship.alive = false
+                    end
+                end
+            end
 
             if self.age > 3 then
                 self.alive = false

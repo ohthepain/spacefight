@@ -18,7 +18,7 @@ Spaceship.new = function(x, y, r)
 
     self.shoot = function()
         if love.timer.getTime() - self.lastShotTime > 0.7 then
-            shootMissile(self.x, self.y, self.r)
+            shootMissile(self)
             self.lastShotTime = love.timer.getTime()
         end
     end

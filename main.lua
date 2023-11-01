@@ -10,14 +10,13 @@ screenheight = love.graphics.getHeight()
 
 missiles = {}
 spaceships = {}
-missile = Missile.new(x, y, r)
 hero = Spaceship.new(screenwidth / 5, screenheight / 2, math.pi)
 enemy = Spaceship.new(screenwidth * 4 / 5, screenheight / 2, 0)
 table.insert(spaceships, hero)
 table.insert(spaceships, enemy)
 
-function shootMissile(x, y, r)
-    missile = Missile.new(x, y, r)
+function shootMissile(owner)
+    missile = Missile.new(owner)
     table.insert(missiles, missile)
 end
 
