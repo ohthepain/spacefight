@@ -1,5 +1,8 @@
 require 'spaceship'
 require 'missile'
+require 'player'
+require 'request-manager'
+require 'testrequest'
 
 screenwidth = love.graphics.getWidth()
 screenheight = love.graphics.getHeight()
@@ -10,10 +13,31 @@ screenheight = love.graphics.getHeight()
 
 missiles = {}
 spaceships = {}
-hero = Spaceship.new(screenwidth / 5, screenheight / 2, math.pi)
-enemy = Spaceship.new(screenwidth * 4 / 5, screenheight / 2, 0)
-table.insert(spaceships, hero)
-table.insert(spaceships, enemy)
+player1 = Player.new("foo")
+player2 = Player.new("bar")
+-- sendRequest()
+
+function reset()
+    hero = Spaceship.new(screenwidth / 5, screenheight / 2, math.pi)
+    enemy = Spaceship.new(screenwidth * 4 / 5, screenheight / 2, 0)
+    player1.spaceship = hero
+    player2.spaceship = enemy
+    for i,missile in ipairs(missiles) do
+        missile.alive = false
+    end
+    missiles = {}
+    spaceships = {}
+    table.insert(spaceships, hero)
+    table.insert(spaceships, enemy)
+end    
+
+function score(spaceship)
+    if player1.spaceship == spaceship then
+        player1.score = player1.score + 1
+    else
+        player2.score = player2.score + 1
+    end
+end
 
 function shootMissile(owner)
     missile = Missile.new(owner)
@@ -24,6 +48,22 @@ function love.load()
     image = love.graphics.newImage("assets/love-ball.png")
     h = 64
     w = 64
+    reset()
+
+    requestManager = RequestManager.new("http://0.0.0.0:8080/api/")
+    requestManager.sendObject("/spaceship/update", player1)
+end
+
+function love.keypressed(key)
+    if key == 't' then
+        enemy_speed = 15
+    end
+end
+
+function love.keyreleased(key)
+    if key == 't' then
+        enemy_speed = 30 -- 't' key has been released
+    end
 end
 
 function love.update(dt)
