@@ -1,4 +1,5 @@
 local _ENV = require 'strict.lib.std.strict' (_G)
+local cjson = require("json4lua.json.json") --https://gobyexample.com/json
 require 'player'
 require 'missile'
 require 'spaceship'
@@ -10,6 +11,28 @@ printf = function(s,...)
 end
 
 function love.load()
+    local rooms = requestManager.get("rooms")
+    printf('get rooms dunn: %s\n', table.concat(rooms))
+    for key, roomString in ipairs(rooms) do
+        printf("::::rooms: %s -> %s\n", key, roomString)
+        local room = cjson.decode(roomString)
+        for roomId, v in pairs(room) do
+            printf("::::::::room: %s -> %s\n", roomId, v.roomId)
+            local url = string.format("room/join?roomid=%s", roomId)
+            local rooms = requestManager.postObject(url, gameManager.hero)
+            break
+        end
+    end
+    -- local key, roomString = pairs(rooms)(rooms)
+    -- printf("choose room: key <%s>\nchoose roomString: <%s>\n", key, roomString)
+    -- local room = cjson.decode(roomString, 1)
+    -- printf('choose room dunn: %s\n', table.concat(room))
+    -- local roomid = room.Uuid
+    -- printf("roomid %s\n", roomid)
+end
+
+function love.quit()
+    print("we are exiting")
 end
 
 function checkKeys()
@@ -53,12 +76,12 @@ function love.keypressed(key)
         end
     end
 
-    requestManager.sendObject("player/update", request)
+    requestManager.postObject("player/update", request)
 end
 
 function love.keyreleased(key)
     checkKeys()
-    printf('key up %s\n', key)
+    -- printf('key up %s\n', key)
 
     if key == 'up' or key == 'down' then
         printf('kill accel %s\n', key)
@@ -75,7 +98,7 @@ function love.keyreleased(key)
         gameManager.getInstance().getPlayer(1).spaceship.polarVelocity = 0
     end
 
-    requestManager.sendObject("player/update", gameManager.getInstance().getPlayer(1))
+    requestManager.postObject("player/update", gameManager.getInstance().getPlayer(1))
 end
 
 function love.update(dt)

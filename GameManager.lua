@@ -1,4 +1,4 @@
-local cjson = require("json4lua.json.json")
+local cjson = require("json4lua.json.json") --https://gobyexample.com/json
 local spaceship = spaceship or require 'spaceship'
 
 screenwidth = love.graphics.getWidth()
@@ -19,6 +19,7 @@ GameManager.new = function()
     self.player1 = Player.new("foo")
     self.player2 = Player.new("bar")
     self.players = {}
+    self.hero = self.player1
     self.players[1] = self.player1
     self.players[2] = self.player2
     print("%s\n", cjson.encode(self))
