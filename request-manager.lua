@@ -3,21 +3,25 @@ local ltn12 = require("ltn12")
 local cjson = require("json4lua.json.json")
 
 RequestManager = {}
+RequestManager.__index = RequestManager
 RequestManager.new = function(serverAddress)
     local self = {}
+    setmetatable(self, GameManager)
+    RequestManager.theInstance = self
 
     self.serverAddress = serverAddress
 
     self.sendObject = function(endpoint, obj)
-        local path = "http://0.0.0.0:8080/api/" .. endpoint .. "?param_1=one&param_2=two&param_3=three"
-        obj.spaceship = nil
+        -- local url = "http://0.0.0.0:8080/api/" .. endpoint .. "?param_1=one&param_2=two&param_3=three"
+        local url = "http://0.0.0.0:8080/api/" .. endpoint
         local request_body = cjson.encode(obj)
+        print("url:" .. url)
         print("request_body:" .. request_body)
 
         local response_body = {}
         local res, code, response_headers, status = http.request
         {
-            url = path,
+            url = url,
             method = "POST",
             headers =
             {
@@ -33,3 +37,13 @@ RequestManager.new = function(serverAddress)
 
     return self
 end
+
+RequestManager.getInstance = function()
+    return RequestManager.theInstance
+end
+
+if not RequestManager.theInstance then
+    RequestManager.new("http://0.0.0.0:8080/api/")
+end
+
+return RequestManager.theInstance

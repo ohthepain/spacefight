@@ -1,125 +1,89 @@
-require 'spaceship'
-require 'missile'
+local _ENV = require 'strict.lib.std.strict' (_G)
 require 'player'
-require 'request-manager'
-require 'testrequest'
+require 'missile'
+require 'spaceship'
+requestManager = require 'request-manager'
+gameManager = require 'GameManager'
 
-screenwidth = love.graphics.getWidth()
-screenheight = love.graphics.getHeight()
--- x, y = screenwidth / 2, screenheight / 2
--- xv, yv = 0, 0
--- r = 0
--- drag = 0.999
-
-missiles = {}
-spaceships = {}
-player1 = Player.new("foo")
-player2 = Player.new("bar")
--- sendRequest()
-
-function reset()
-    hero = Spaceship.new(screenwidth / 5, screenheight / 2, math.pi)
-    enemy = Spaceship.new(screenwidth * 4 / 5, screenheight / 2, 0)
-    player1.spaceship = hero
-    player2.spaceship = enemy
-    for i,missile in ipairs(missiles) do
-        missile.alive = false
-    end
-    missiles = {}
-    spaceships = {}
-    table.insert(spaceships, hero)
-    table.insert(spaceships, enemy)
-end    
-
-function score(spaceship)
-    if player1.spaceship == spaceship then
-        player1.score = player1.score + 1
-    else
-        player2.score = player2.score + 1
-    end
-end
-
-function shootMissile(owner)
-    missile = Missile.new(owner)
-    table.insert(missiles, missile)
+printf = function(s,...)
+    return io.write(s:format(...))
 end
 
 function love.load()
-    image = love.graphics.newImage("assets/love-ball.png")
-    h = 64
-    w = 64
-    reset()
+end
 
-    requestManager = RequestManager.new("http://0.0.0.0:8080/api/")
-    requestManager.sendObject("/spaceship/update", player1)
+function checkKeys()
+    gameManager.getPlayer(1).spaceship.shooting = love.keyboard.isDown("q")
+    gameManager.getPlayer(2).spaceship.shooting = love.keyboard.isDown(".")
 end
 
 function love.keypressed(key)
-    if key == 't' then
-        enemy_speed = 15
+    checkKeys()
+
+    if key == 'up' then
+        gameManager.getInstance().getPlayer(2).spaceship.acceleration = 100
+    elseif key == 'down' then
+        gameManager.getInstance().getPlayer(2).spaceship.acceleration = -100
     end
+
+    if key == 'w' then
+        gameManager.getInstance().getPlayer(1).spaceship.acceleration = 100
+    elseif key == 's' then
+        gameManager.getInstance().getPlayer(1).spaceship.acceleration = -100
+    end
+
+    if key == 'left' then
+        gameManager.getInstance().getPlayer(2).spaceship.polarVelocity = -3
+    elseif key == 'right' then
+        gameManager.getInstance().getPlayer(2).spaceship.polarVelocity = 3
+    end
+
+    if key == 'a' then
+        gameManager.getInstance().getPlayer(1).spaceship.polarVelocity = -3
+    elseif key == 'd' then
+        gameManager.getInstance().getPlayer(1).spaceship.polarVelocity = 3
+    end
+
+    local request = {}
+    request.player = gameManager.getInstance().getPlayer(1)
+    request.missiles = {}
+    for _,missile in ipairs(gameManager.getInstance().missiles) do
+        if missile.owner == request.player and missile.alive then
+            table.insert(request.missiles, missile)
+        end
+    end
+
+    requestManager.sendObject("player/update", request)
 end
 
 function love.keyreleased(key)
-    if key == 't' then
-        enemy_speed = 30 -- 't' key has been released
+    checkKeys()
+    printf('key up %s\n', key)
+
+    if key == 'up' or key == 'down' then
+        printf('kill accel %s\n', key)
+        gameManager.getInstance().getPlayer(2).spaceship.acceleration = 0
     end
+    if key == 'left' or key == 'right' then
+        gameManager.getInstance().getPlayer(2).spaceship.polarVelocity = 0
+    end
+
+    if key == 'w' or key == 's' then
+        gameManager.getInstance().getPlayer(1).spaceship.acceleration = 0
+    end
+    if key == 'a' or key == 'd' then
+        gameManager.getInstance().getPlayer(1).spaceship.polarVelocity = 0
+    end
+
+    requestManager.sendObject("player/update", gameManager.getInstance().getPlayer(1))
 end
 
 function love.update(dt)
-
-    missilescopy = {}
-    for n, missile in ipairs(missiles) do
-        missile.update(dt)
-        if missile.alive then
-            table.insert(missilescopy, missile)
-        end
-    end
-    missiles = missilescopy
-
-    for n, spaceship in ipairs(spaceships) do
-        spaceship.update(dt)
-    end
-
-    if love.keyboard.isDown("left") then
-        enemy.turn(-3 * dt)
-    end
-    if love.keyboard.isDown("right") then
-        enemy.turn(3 * dt)
-    end
-    if love.keyboard.isDown("up") then
-        enemy.accelerate(dt * 100)
-    end
-    if love.keyboard.isDown("down") then
-        enemy.accelerate(dt * -100)
-    end
-    if love.keyboard.isDown(".") then
-        enemy.shoot()
-    end
-
-    if love.keyboard.isDown("a") then
-        hero.turn(-3 * dt)
-    end
-    if love.keyboard.isDown("d") then
-        hero.turn(3 * dt)
-    end
-    if love.keyboard.isDown("w") then
-        hero.accelerate(dt * 100)
-    end
-    if love.keyboard.isDown("s") then
-        hero.accelerate(dt * -100)
-    end
-    if love.keyboard.isDown("q") then
-        hero.shoot()
+    if gameManager.theInstance then
+        gameManager.update(dt)
     end
 end
 
 function love.draw()
-    for n, missile in ipairs(missiles) do
-        missile.draw()
-    end
-
-    for n, spaceship in ipairs(spaceships) do
-        spaceship.draw()
-    end
+    gameManager.draw()
 end

@@ -1,4 +1,5 @@
-require 'missile'
+local missile = missile or require 'missile'
+local gameManager = nil
 
 Spaceship = {}
 Spaceship.new = function(x, y, r)
@@ -15,10 +16,18 @@ Spaceship.new = function(x, y, r)
     self.screenwidth = love.graphics.getWidth()
     self.screenheight = love.graphics.getHeight()
     self.lastShotTime = love.timer.getTime()
+    self.acceleration = 0
+    self.polarVelocity = 0
+    self.shooting = false
+    self.missiles = {}
+    self.maxMissiles = 5
 
     self.shoot = function()
-        if love.timer.getTime() - self.lastShotTime > 0.7 then
-            shootMissile(self)
+        gameManager = gameManager or require 'GameManager'
+        if love.timer.getTime() - self.lastShotTime > 0.2 then
+            if self.getNumMissiles() < self.maxMissiles then
+                gameManager.shootMissile(self)
+            end
             self.lastShotTime = love.timer.getTime()
         end
     end
@@ -29,8 +38,26 @@ Spaceship.new = function(x, y, r)
         end
     end
 
+    self.getNumMissiles = function()
+        local n = 0
+        for _,missile in ipairs(self.missiles) do
+            if missile.owner == self then
+                n = n + 1
+            end
+        end
+
+        return n
+    end
+
     self.update = function(dt)
         if self.alive then
+            if self.shooting then
+                self.shoot()
+            end
+
+            self.accelerate(dt * self.acceleration)
+            self.turn(dt * self.polarVelocity)
+
             self.y = self.y + self.yv * dt
             self.x = self.x - self.xv * dt
         
@@ -59,3 +86,5 @@ Spaceship.new = function(x, y, r)
     
     return self
 end
+
+return Spaceship
